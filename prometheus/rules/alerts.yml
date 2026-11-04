@@ -1,0 +1,49 @@
+groups:
+  - name: host-alerts
+    rules:
+      - alert: PrometheusTargetMissing
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Prometheus target is unavailable"
+          description: "Target {{ $labels.job }} at {{ $labels.instance }} has been down for more than 2 minutes."
+
+      - alert: HostHighCPU
+        expr: 100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m]))) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Host CPU utilization is high"
+          description: "CPU utilization on {{ $labels.instance }} has exceeded 85% for 5 minutes."
+
+      - alert: HostHighMemory
+        expr: 100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Host memory utilization is high"
+          description: "Memory utilization on {{ $labels.instance }} has exceeded 90% for 5 minutes."
+
+      - alert: HostLowDiskSpace
+        expr: 100 * (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs|nsfs"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs|nsfs"}) < 10
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Host filesystem space is low"
+          description: "Less than 10% disk space remains on {{ $labels.mountpoint }} at {{ $labels.instance }}."
+
+  - name: container-alerts
+    rules:
+      - alert: ContainerOOMEvents
+        expr: increase(container_oom_events_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Container out-of-memory event detected"
+          description: "cAdvisor reported an OOM event for container {{ $labels.name }}."
