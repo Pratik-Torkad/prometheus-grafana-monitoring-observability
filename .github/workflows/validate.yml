@@ -95,8 +95,19 @@ jobs:
       - name: Verify Prometheus scrape targets
         run: |
           set -eu
-          curl -fsS http://127.0.0.1:9090/api/v1/targets \
-            | jq -e '[.data.activeTargets[] | select(.health == "up")] | length == 4'
+          up_count=0
+          for attempt in $(seq 1 30); do
+            target_data="$(curl -fsS http://127.0.0.1:9090/api/v1/targets)"
+            up_count="$(printf '%s' "$target_data" | jq '[.data.activeTargets[] | select(.health == "up")] | length')"
+            if [ "$up_count" -eq 4 ]; then
+              printf '%s' "$target_data" | jq -r '.data.activeTargets[] | "\(.labels.job): \(.health)"'
+              break
+            fi
+            echo "Waiting for all four targets; currently up: $up_count"
+            printf '%s' "$target_data" | jq -r '.data.activeTargets[] | "\(.labels.job): \(.health) - \(.lastError)"'
+            sleep 5
+          done
+          test "$up_count" -eq 4
 
       - name: Verify Grafana provisioning
         run: |
