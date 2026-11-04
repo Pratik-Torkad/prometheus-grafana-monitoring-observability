@@ -1,0 +1,9 @@
+.env
+.env.*
+!.env.example
+
+# Local data and generated files
+data/
+*.log
+.DS_Store
+Thumbs.db
