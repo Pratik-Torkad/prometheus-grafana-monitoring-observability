@@ -22,15 +22,15 @@ jobs:
         run: |
           docker run --rm \
             -v "$PWD/prometheus:/etc/prometheus:ro" \
-            prom/prometheus:v3.13.2 \
-            promtool check config /etc/prometheus/prometheus.yml
+            --entrypoint promtool prom/prometheus:v3.13.2 \
+            check config /etc/prometheus/prometheus.yml
 
       - name: Validate Alertmanager configuration
         run: |
           docker run --rm \
             -v "$PWD/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro" \
-            prom/alertmanager:v0.34.2 \
-            amtool check-config /etc/alertmanager/alertmanager.yml
+            --entrypoint amtool prom/alertmanager:v0.34.2 \
+            check-config /etc/alertmanager/alertmanager.yml
 
       - name: Validate Grafana dashboard JSON
         run: python -m json.tool grafana/dashboards/docker-host-overview.json > /dev/null
